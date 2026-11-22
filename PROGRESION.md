@@ -19,6 +19,10 @@ Catatan progres, notulensi prompt input/output, serta riwayat perubahan file dan
 | 9 | `2026-11-22 19:55 WIB` | Konversi HTML Yahoo Finance `IDR=X` menjadi `data/raw/idr_usd.csv` (`src/parse_yahoo_html.py`) | Selesai |
 | 10 | `2026-11-22 19:58 WIB` | Konversi HTML `BZ=F`, `ZL=F`, & `MYR=X` ke CSV (`Tahap 0` selesai 100%) | Selesai |
 | 11 | `2026-11-22 20:01 WIB` | Tahap 1: Alignment, lagging bebas leakage, fitur multi-horizon, rezim pasar, & plot tiap dataset | Selesai |
+| 12 | `2026-11-22 20:12 WIB` | Diskusi kelayakan jumlah variabel & penjelasan konsep Tahap 2 (Walk-Forward + Baseline) | Selesai |
+| 13 | `2026-11-22 20:16 WIB` | Tahap 2: Implementasi Walk-Forward Expanding Window + Embargo & Baseline Naive/Ridge | Selesai |
+| 14 | `2026-11-22 20:20 WIB` | Penjelasan arti metrik hasil Tahap 2 & parameter yang dapat diatur | Selesai |
+| 15 | `2026-11-22 20:26 WIB` | Pembuatan plot metrik & prediksi walk-forward baseline (`src/plot_baseline.py`) | Selesai |
 
 ---
 
@@ -280,4 +284,90 @@ Catatan progres, notulensi prompt input/output, serta riwayat perubahan file dan
 | **Ditambah** | `outputs/zl_plot.png`, `outputs/bz_plot.png`, `outputs/myr_plot.png`, `outputs/idr_plot.png`, `outputs/all_datasets_comparison.png` | Grafik harga + volatilitas tiap variabel eksternal & perbandingan indeks ternormalisasi |
 | **Diubah** | `WORKING_PATH.md` | Ceklis `[x]` untuk seluruh item Tahap 1 |
 | **Diubah** | `PROGRESION.md` | Penambahan log Sesi #11 |
+| **Dihapus** | — | Tidak ada |
+
+---
+
+## Sesi #12 — `2026-11-22 20:12 WIB`
+
+### 1. Prompt Input
+- Meminta penjelasan mengenai mengapa data terlihat berbeda/kurang terhubung dan apakah dataset kekurangan variabel, serta penjelasan konsep Tahap 2 (Kerangka Walk-Forward & Baseline Naive/Ridge) sebelum dieksekusi.
+
+### 2. Hasil Output
+- Menjelaskan bahwa perbedaan skala/korelasi linear harian (`MYR=X`, `IDR=X` vs `ZL=F`, `BZ=F`) adalah hal wajar pada data komoditas-kurs karena pengaruh kurs/energi sering bersifat non-linear dan bekerja di horizon lebih panjang (`h=5, 20`).
+- Menegaskan 4 variabel eksternal yang sudah ada sudah cukup kuat dan realistis untuk cakupan riset tanpa perlu menambah kompleksitas akuisisi baru.
+- Menjelaskan konsep *Walk-Forward Validation* (*expanding window* bebas *data leakage*) serta fungsi *baseline* **Naive / Random Walk** dan **Ridge Regression** sebagai patokan wajib sebelum masuk ke XGBoost dan LSTM.
+
+### 3. Perubahan File & Program
+
+| Aksi | File / Program | Keterangan |
+| :--- | :--- | :--- |
+| **Ditambah** | — | Tidak ada |
+| **Diubah** | `PROGRESION.md` | Penambahan log Sesi #12 |
+| **Dihapus** | — | Tidak ada |
+
+---
+
+## Sesi #13 — `2026-11-22 20:16 WIB`
+
+### 1. Prompt Input
+- Meminta lanjut mengerjakan Tahap 2 (Kerangka Walk-Forward & Baseline Naive/Ridge).
+
+### 2. Hasil Output & Verifikasi
+- Membuat dan menjalankan `src/walk_forward_baseline.py` dengan skema *expanding window* tahunan (`2019–2026`, 8 *fold*), *embargo* `h` baris pada batas train/test, serta `StandardScaler` terpisah per *fold*.
+- **Hasil evaluasi (`outputs/baseline_results.csv`)**:
+  - `h=1` (`N=1841`): Naive RMSE `89.33` (Dir Acc `48.29%`) vs Ridge Eksternal RMSE `89.76` (Dir Acc `51.71%`)
+  - `h=5` (`N=1837`): Naive RMSE `204.54` (Dir Acc `45.62%`) vs Ridge Eksternal RMSE `209.86` (Dir Acc `51.71%`)
+  - `h=20` (`N=1822`): Naive RMSE `423.30` (Dir Acc `42.10%`) vs Ridge Eksternal RMSE `513.83` (Dir Acc `54.61%`)
+- **Temuan kunci**: Model linear (`Ridge`) belum mampu mengalahkan *Naive* dari sisi RMSE, namun penambahan variabel eksternal konsisten menaikkan *Directional Accuracy* (terutama di `h=20` dari `42.10%` menjadi `54.61%`), menjadi justifikasi empiris untuk pemodelan non-linear (XGBoost) & sekuensial (LSTM) di Tahap 3.
+
+### 3. Perubahan File & Program
+
+| Aksi | File / Program | Keterangan |
+| :--- | :--- | :--- |
+| **Ditambah** | `src/walk_forward_baseline.py` | Pipeline *walk-forward* & evaluasi baseline Naive + Ridge (`h=1, 5, 20`) |
+| **Ditambah** | `outputs/baseline_results.csv` | Tabel ringkasan metrik baseline per horizon |
+| **Ditambah** | `outputs/baseline_predictions.csv` | Prediksi *out-of-fold* (`2019–2026`) untuk evaluasi lanjutan |
+| **Diubah** | `WORKING_PATH.md` | Ceklis `[x]` untuk seluruh item Tahap 2 |
+| **Diubah** | `PROGRESION.md` | Penambahan log Sesi #13 |
+| **Dihapus** | — | Tidak ada |
+
+---
+
+## Sesi #14 — `2026-11-22 20:20 WIB`
+
+### 1. Prompt Input
+- Meminta penjelasan maksud dari hasil evaluasi Tahap 2 (`outputs/baseline_results.csv`) serta parameter/hal apa saja yang dapat diatur.
+
+### 2. Hasil Output
+- Menjelaskan arti setiap metrik (`N_Test`, `Price_RMSE`, `Price_MAE`, `Price_MAPE`, `Return_RMSE`, `Dir_Acc_%`), alasan mengapa *Naive* unggul di RMSE sedangkan *Ridge + Eksternal* unggul di *Directional Accuracy*, serta daftar parameter yang dapat diatur di `src/walk_forward_baseline.py` (`alpha`, *expanding vs sliding window*, `TEST_YEARS`, `HORIZONS`, dan subset fitur).
+
+### 3. Perubahan File & Program
+
+| Aksi | File / Program | Keterangan |
+| :--- | :--- | :--- |
+| **Ditambah** | — | Tidak ada |
+| **Diubah** | `PROGRESION.md` | Penambahan log Sesi #14 |
+| **Dihapus** | — | Tidak ada |
+
+---
+
+## Sesi #15 — `2026-11-22 20:26 WIB`
+
+### 1. Prompt Input
+- Meminta visualisasi grafik dari hasil Tahap 2 (Walk-Forward Baseline).
+
+### 2. Hasil Output & Verifikasi
+- Membuat dan menjalankan `src/plot_baseline.py` untuk menghasilkan 2 grafik:
+  - `outputs/baseline_metrics_plot.png`: Bar chart perbandingan `Price_RMSE` dan `Dir_Acc_%` per horizon (`h=1, 5, 20`).
+  - `outputs/baseline_predictions_plot.png`: Plot deret waktu harga aktual vs prediksi (`Naive` & `Ridge Eksternal`) pada periode uji `2019–2026` untuk `h=1` dan `h=20`.
+
+### 3. Perubahan File & Program
+
+| Aksi | File / Program | Keterangan |
+| :--- | :--- | :--- |
+| **Ditambah** | `src/plot_baseline.py` | Skrip visualisasi hasil metrik & prediksi walk-forward baseline |
+| **Ditambah** | `outputs/baseline_metrics_plot.png` | Grafik bar chart perbandingan RMSE & Directional Accuracy |
+| **Ditambah** | `outputs/baseline_predictions_plot.png` | Grafik harga aktual vs prediksi `h=1` dan `h=20` (`2019–2026`) |
+| **Diubah** | `PROGRESION.md` | Penambahan log Sesi #15 |
 | **Dihapus** | — | Tidak ada |

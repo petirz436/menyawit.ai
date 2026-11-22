@@ -1,0 +1,10 @@
+Horizon,Model,N_Test,Price_RMSE,Price_MAE,Price_MAPE,Return_RMSE,Dir_Acc_%
+h=1,Naive (Random Walk),1841,89.33,58.16,1.44,0.01985,48.29
+h=1,Ridge (Internal Only),1841,89.68,58.59,1.46,0.01996,50.19
+h=1,Ridge (Internal + Eksternal),1841,89.76,58.69,1.46,0.02009,51.71
+h=5,Naive (Random Walk),1837,204.54,137.24,3.44,0.04606,45.62
+h=5,Ridge (Internal Only),1837,208.73,140.6,3.54,0.04722,50.19
+h=5,Ridge (Internal + Eksternal),1837,209.86,142.54,3.62,0.04825,51.71
+h=20,Naive (Random Walk),1822,423.3,280.67,7.1,0.09582,42.1
+h=20,Ridge (Internal Only),1822,493.27,314.08,8.14,0.11086,48.35
+h=20,Ridge (Internal + Eksternal),1822,513.83,329.04,8.59,0.1169,54.61

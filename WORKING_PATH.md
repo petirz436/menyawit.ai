@@ -41,9 +41,9 @@ proyek_machine_learning/
 - [x] Simpan dataset siap latih ke `data/processed/` (`data/processed/dataset_aligned.csv`: 2.913 baris x 43 kolom)
 
 ### Tahap 2 — Kerangka Walk-Forward & Baseline
-- [ ] Implementasi *walk-forward validation* (expanding/sliding window tanpa *data leakage*)
-- [ ] Implementasi baseline **Naive / Random Walk**
-- [ ] Implementasi baseline pembanding (opsional: Ridge / ARIMA)
+- [x] Implementasi *walk-forward validation* (expanding/sliding window tanpa *data leakage*) (`src/walk_forward_baseline.py`, 8 fold tahunan `2019–2026` + *embargo*)
+- [x] Implementasi baseline **Naive / Random Walk** (`outputs/baseline_results.csv`)
+- [x] Implementasi baseline pembanding (opsional: Ridge / ARIMA) (`Ridge` Internal Only & Internal + Eksternal)
 
 ### Tahap 3 — Modeling Multi-Horizon (`h = 1, 5, 20`)
 - [ ] Model **XGBoost** (*Internal Only* & *Internal + Eksternal*)
